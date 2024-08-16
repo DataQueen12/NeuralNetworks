@@ -1,0 +1,51 @@
+install.packages("cli")
+.rs.restartR()
+install.packages("tidyr")
+install.packages("stringr")
+install.packages("rworldmap")
+library(rworldmap)
+
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(sf)
+library(readr)
+library(stringr)
+library(rworldmap)
+
+# Load updated data from CSV
+passport_data <- read_csv("C:/Users/saral/OneDrive/Documents/Academics/Cumberlands/Summer 2024/ITS530-Analyzing & Data Viz/henley_passport_index_2024.csv")
+
+# Data preparation without unnest
+passport_list <- str_split(passport_data$Passport, ", ")  # Split the countries
+passport_summary <- data.frame(
+  Passport = unlist(passport_list),
+  Visa_free_score = rep(passport_data$`Visa-free score`, sapply(passport_list, length))
+)
+# Load the world map data
+world_map <- map_data("world")
+
+# Merge world map with passport data
+map_data <- world_map %>%
+  left_join(passport_summary, by = c("region" = "Passport"))
+
+# Check the structure of map_data
+str(map_data)
+
+# Plot the world map with visa-free score and enhanced colors
+ggplot(data = map_data, aes(x = long, y = lat, group = group, fill = Visa_free_score)) +
+  geom_polygon(color = "white", size = 0.1) +
+  scale_fill_gradientn(colors = c("navyblue", "darkgreen", "yellow", "orange", "red"), 
+                       na.value = "grey50", 
+                       name = "Visa-Free\nCountries") +
+  labs(title = "The Power of Passports (Updated 2024)",
+       subtitle = "Visa-Free Access by Passport Rank",
+       fill = "Number of Visa-Free Countries") +
+  theme_minimal() +
+  theme(axis.text = element_blank(), 
+        axis.ticks = element_blank(), 
+        panel.grid = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5, size = 14))
